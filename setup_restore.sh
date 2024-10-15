@@ -44,17 +44,18 @@ install_if_missing() {
 }
 
 # Restore backup if exists
-restore_backup() {
-    local file=$1
-    local dest=$2
+# NOTE: Not sure if this is useful
+#restore_backup() {
+#    local file=$1
+#    local dest=$2
 
-    if [ -f "$file" ]; then
-        tar -xzvf "$file" -C "$dest" || log_error "Failed to restore $file."
-        log "Restored $file."
-    else
-        log "Backup $file not found. Skipping."
-    fi
-}
+#    if [ -f "$file" ]; then
+#        tar -xzvf "$file" -C "$dest" || log_error "Failed to restore $file."
+#        log "Restored $file."
+#    else
+#        log "Backup $file not found. Skipping."
+#    fi
+#}
 
 # Clone repo if not already cloned
 clone_repo() {
@@ -191,8 +192,9 @@ for package in "${packages[@]}"; do
 done
 
 # Restore backups
-restore_backup "dotfiles_backup.tar.gz" "$HOME"
-restore_backup "dev_files_backup.tar.gz" "$HOME"
+# NOTE: Not used currently
+#restore_backup "dotfiles_backup.tar.gz" "$HOME"
+#restore_backup "dev_files_backup.tar.gz" "$HOME"
 
 # Install tools and configurations
 install_oh_my_zsh
