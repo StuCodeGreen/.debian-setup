@@ -1,133 +1,87 @@
 #!/bin/zsh
 
-# Function for logging
+# Logging functions
 log() {
     echo "[INFO] $1"
 }
 
-# Function for logging errors
 log_error() {
     echo "[ERROR] $1" >&2
     exit 1
 }
 
-# Ensure script is not run as root
+# Ensure the script is not run as root
 if [ "$EUID" -eq 0 ]; then
-    log_error "This script cannot be run as root or with sudo. Please rerun the script without sudo."
+    log_error "Do not run this script as root or with sudo."
 fi
 
-# Function to add Neovim to PATH in .zshrc
+# Define paths for backup and files
+BACKUP_DIR=~/debian-setup
+MYPROFILE_PATH="$BACKUP_DIR/.myProfile"
+GITIGNORE_GLOBAL_PATH="$BACKUP_DIR/.gitignore_global"
+GLOBAL_GITIGNORE=~/.gitignore_global
+ZSHRC_PATH=~/.zshrc
+
+# Add Neovim to PATH in .zshrc if missing
 add_nvim_to_path() {
-    if ! grep -v '^#' ~/.zshrc | grep -q 'export PATH="\$PATH:/opt/nvim-linux64/bin"'; then
-        echo 'export PATH="$PATH:/opt/nvim-linux64/bin"' >> ~/.zshrc
-        log "Added Neovim to PATH in .zshrc. Please restart terminal to apply changes."
-        source ~/.zshrc
+    local nvim_path='export PATH="$PATH:/opt/nvim-linux64/bin"'
+    if ! grep -v '^#' "$ZSHRC_PATH" | grep -q "$nvim_path"; then
+        echo "$nvim_path" >> "$ZSHRC_PATH"
+        log "Neovim path added to .zshrc. Please restart terminal to apply changes."
     else
-        log "Neovim path is already present .zshrc"
-        source ~/.zshrc
+        log "Neovim path already in .zshrc."
     fi
 }
 
-# Function to install Neovim if not installed
-install_neovim() {
-    if ! command -v nvim &> /dev/null; then
-        log "Neovim is not installed. Installing Neovim..."
-        
-        # Download Neovim package
-        curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
-        
-        # Remove any existing Neovim installation
-        if [ -d $(which nvim) ]; then
-            log "Removing existing Neovim installation..."
-            sudo rm -rf $(which nvim)    
-        fi
-        
-        # Extract and install Neovim
-        sudo tar -C /opt -xzf nvim-linux64.tar.gz
-        
-        # Clean up downloaded file
-        rm nvim-linux64.tar.gz
-        
-        # Add Neovim to PATH
-        add_nvim_to_path
-        
-        # Verify installation
-        if command -v nvim &> /dev/null; then
-            log "Neovim installed successfully. Restart your terminal to apply the changes."
-        else
-            log_error "Neovim installation failed."
-        fi
-    else
-        log "Neovim is already installed."
-        
-        # Ensure Neovim is in the PATH
-        add_nvim_to_path
-    fi
-}
-
-# Check and install package if missing
+# Install packages if missing
 install_if_missing() {
     if ! dpkg -l | grep -q "^ii  $1 "; then
-        log "$1 is not installed. Installing $1..."
-        sudo apt-get install -y "$1" || log_error "Failed to install $1"
+        log "Installing $1..."
+        sudo apt-get install -y "$1" || log_error "Failed to install $1."
     else
         log "$1 is already installed."
     fi
 }
 
-# Restore dotfiles or development files
+# Restore backup if exists
 restore_backup() {
     local file=$1
     local dest=$2
 
-    if [ -f ~/"$file" ]; then
-        tar -xzvf ~/"$file" -C ~ || log_error "Failed to restore $file"
-        log "$file restored successfully."
+    if [ -f "$file" ]; then
+        tar -xzvf "$file" -C "$dest" || log_error "Failed to restore $file."
+        log "Restored $file."
     else
-        log "Backup $file not found. Skipping restoration."
+        log "Backup $file not found. Skipping."
     fi
 }
 
-# Clone a repository if it doesn't exist
+# Clone repo if not already cloned
 clone_repo() {
     local repo_url=$1
     local dest_dir=$2
 
     if [ ! -d "$dest_dir" ]; then
-        log "Cloning repository..."
+        log "Cloning $repo_url into $dest_dir..."
         git clone "$repo_url" "$dest_dir" || log_error "Failed to clone repository."
     else
-        log "Repository already exists at $dest_dir. Skipping clone."
+        log "Repository already exists at $dest_dir."
     fi
 }
 
-# Install Oh My Zsh if not installed
-install_oh_my_zsh() {
-    if [ ! -d ~/.oh-my-zsh ]; then
-        log "Installing Oh My Zsh..."
-        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || log_error "Failed to install Oh My Zsh."
-        chsh -s "$(which zsh)" || log_error "Failed to set Zsh as default shell."
-    else
-        log "Oh My Zsh is already installed."
-    fi
-}
-
-# Install Neovim if not installed
+# Install Neovim
 install_neovim() {
     if ! command -v nvim &> /dev/null; then
         log "Installing Neovim..."
         curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
         sudo rm -rf /opt/nvim-linux64
         sudo tar -C /opt -xzf nvim-linux64.tar.gz
-        add_nvim_to_path
         rm nvim-linux64.tar.gz
-        if command -v nvim &> /dev/null; then
-            log "Neovim installed successfully. Restart your terminal to apply changes."
-        else
-            log_error "Neovim installation failed."
-        fi
+        add_nvim_to_path
+        command -v nvim &> /dev/null && log "Neovim installed successfully." || log_error "Neovim installation failed."
     else
         log "Neovim is already installed."
+        add_nvim_to_path
     fi
 }
 
@@ -144,10 +98,94 @@ install_nvm() {
     fi
 }
 
-# List of APT packages to install
-packages=(curl git git-man zsh ripgrep xclip xsel tmux alacritty)
+# Function to set up and manage files
+manage_file() {
+    local source_file=$1
+    local dest_file=$2
+    local description=$3
+    local backup_file="${dest_file}.bak"
+
+    if [ -f "$dest_file" ]; then
+        log "$description exists."
+
+        # Check if the content of the source file is different from the destination file
+        if ! cmp -s "$source_file" "$dest_file"; then
+            log "Content differs from backup. What do you want to do?"
+            echo "1) Overwrite $description with backup content (creates a backup of the current file)"
+            echo "2) Update backup file with current version of $description"
+            echo "3) Do nothing"
+            read -r choice
+
+            case $choice in
+                1)
+                    # Create a backup of the current file before overwriting
+                    log "Overwriting home directory $description with backup version."
+                    cp "$dest_file" "$backup_file" || log_error "Failed to create a backup."
+                    cp "$source_file" "$dest_file" || log_error "Failed to overwrite $description."
+                    log "Backup of the old $description saved as $backup_file."
+                    ;;
+                2)
+                    log "Updating backup for $description."
+                    cp "$dest_file" "$source_file" || log_error "Failed to update backup."
+                    log "Backup updated with the current version of $description."
+                    ;;
+                3)
+                    log "No changes made to $description."
+                    ;;
+                *)
+                    log "Invalid choice. No changes made."
+                    ;;
+            esac
+        else
+            log "$description is already up to date."
+        fi
+    else
+        log "Creating $description from backup."
+        cp "$source_file" "$dest_file" || log_error "Failed to create $description."
+    fi
+}
+
+
+# Function to set up global .gitignore
+setup_gitignore_global() {
+    manage_file "$GITIGNORE_GLOBAL_PATH" "$GLOBAL_GITIGNORE" ".gitignore_global"
+
+    # Ensure Git configuration points to the global .gitignore
+    if [ "$(git config --global core.excludesfile)" != "$GLOBAL_GITIGNORE" ]; then
+        log "Setting Git global excludesfile to .gitignore_global."
+        git config --global core.excludesfile "$GLOBAL_GITIGNORE"
+    fi
+}
+
+# Function to set up .myProfile
+setup_profile() {
+    manage_file "$MYPROFILE_PATH" "$HOME/.myProfile" ".myProfile"
+
+    # Ensure .myProfile is sourced in .zshrc
+    if ! grep -q "source ~/.myProfile" "$ZSHRC_PATH"; then
+        log "Adding source line to .zshrc."
+        echo "source ~/.myProfile" >> "$ZSHRC_PATH"
+    else
+        log ".myProfile is already sourced in .zshrc."
+    fi
+}
+
+
+
+
+# Install Oh My Zsh
+install_oh_my_zsh() {
+    if [ ! -d ~/.oh-my-zsh ]; then
+        log "Installing Oh My Zsh..."
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || log_error "Failed to install Oh My Zsh."
+        chsh -s "$(which zsh)" || log_error "Failed to set Zsh as the default shell."
+    else
+        log "Oh My Zsh is already installed."
+    fi
+}
 
 # Install missing packages
+packages=(curl git zsh ripgrep xclip xsel tmux alacritty)
 for package in "${packages[@]}"; do
     install_if_missing "$package"
 done
@@ -156,16 +194,17 @@ done
 restore_backup "dotfiles_backup.tar.gz" "$HOME"
 restore_backup "dev_files_backup.tar.gz" "$HOME"
 
-# Install Oh My Zsh
+# Install tools and configurations
 install_oh_my_zsh
-
-# Install Neovim
 install_neovim
-
-# Clone nvim setup
-clone_repo "git@github.com:StuCodeGreen/nvim-setup.git" ~/.config/nvim
-
-# Install NVM and Node.js LTS
 install_nvm
 
-log "Script execution completed successfully."
+log "Setting up profiles and configurations..."
+setup_profile
+setup_gitignore_global
+
+# Clone Neovim configuration repo
+clone_repo "git@github.com:StuCodeGreen/nvim-setup.git" ~/.config/nvim
+
+log "Script completed successfully."
+
