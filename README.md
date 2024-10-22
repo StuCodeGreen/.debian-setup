@@ -30,13 +30,13 @@ This script automates the setup and restoration of your Debian development envir
 2. **Make the Script Executable**:
 
    ```bash
-   chmod +x setup-restore
+   chmod +x setup_restore.sh
    ```
 
 3. **Run the Script**:
 
    ```bash
-   ./setup-restore
+   ./setup_restore.sh
    ```
 
    **Note**: Do not run this script as root or with sudo.
