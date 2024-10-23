@@ -16,8 +16,8 @@ gituser(){
 onedrive_start() {
     echo "Mounting OneDrive accounts..."
     mkdir -p ~/OneDrivePersonal ~/OneDriveDev
-    rclone --vfs-cache-mode writes mount personal-onedrive: ~/OneDrivePersonal &
-    rclone --vfs-cache-mode writes mount stucodegreen-onedrive: ~/OneDriveDev &
+    rclone --vfs-cache-mode full mount personal-onedrive: ~/OneDrivePersonal &
+    rclone --vfs-cache-mode full mount stucodegreen-onedrive: ~/OneDriveDev &
     echo "OneDrive accounts mounted."
 }
 
