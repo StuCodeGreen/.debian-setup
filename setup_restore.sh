@@ -16,7 +16,7 @@ if [ "$EUID" -eq 0 ]; then
 fi
 
 # Define paths for backup and files
-BACKUP_DIR=~/debian-setup
+BACKUP_DIR=~/.debian-setup
 MYPROFILE_PATH="$BACKUP_DIR/.myProfile"
 GITIGNORE_GLOBAL_PATH="$BACKUP_DIR/.gitignore_global"
 GLOBAL_GITIGNORE=~/.gitignore_global
