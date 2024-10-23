@@ -1,5 +1,4 @@
 alias update='sudo apt update && sudo apt upgrade -y'
-alias c='clear'
 
 function lazygit(){
 	git add .
@@ -19,3 +18,9 @@ alias doc='cd ~/Documents/'
 alias dw='cd ~/Downloads/'
 alias chrome='google-chrome'
 alias google='google-chrome www.google.co.uk'
+alias vim='nvim'
+alias gst='git status -sb'
+alias gup='git pull --rebase'
+alias ffind='find . -name '
+
+
