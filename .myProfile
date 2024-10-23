@@ -1,5 +1,4 @@
-alias update='sudo apt update && sudo apt upgrade -y'
-
+# Function for git commit & push
 function lazygit(){
 	git add .
 	git status
@@ -7,11 +6,31 @@ function lazygit(){
 	git push
 }
 
+# Function to check git username and email
 gituser(){
 	git config user.email
 	git config user.name
 }
 
+# Function to mount OneDrive accounts
+onedrive_start() {
+    echo "Mounting OneDrive accounts..."
+    mkdir -p ~/OneDrivePersonal ~/OneDriveDev
+    rclone --vfs-cache-mode writes mount personal-onedrive: ~/OneDrivePersonal &
+    rclone --vfs-cache-mode writes mount stucodegreen-onedrive: ~/OneDriveDev &
+    echo "OneDrive accounts mounted."
+}
+
+# Function to unmount OneDrive accounts
+onedrive_stop() {
+    echo "Unmounting OneDrive accounts..."
+    fusermount -u ~/OneDrivePersonal
+    fusermount -u ~/OneDriveDev
+    echo "OneDrive accounts unmounted."
+}
+
+# Custom aliases
+alias update='sudo apt update && sudo apt upgrade -y'
 alias c='clear'
 alias dev='cd ~/Dev/'
 alias doc='cd ~/Documents/'
@@ -22,5 +41,4 @@ alias vim='nvim'
 alias gst='git status -sb'
 alias gup='git pull --rebase'
 alias ffind='find . -name '
-
 
