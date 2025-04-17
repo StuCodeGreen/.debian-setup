@@ -17,7 +17,7 @@ onedrive_start() {
     echo "Mounting OneDrive accounts..."
     mkdir -p ~/OneDrivePersonal ~/OneDriveDev
     rclone --vfs-cache-mode full mount personal-onedrive: ~/OneDrivePersonal &
-    rclone --vfs-cache-mode full mount stucodegreen-onedrive: ~/OneDriveDev &
+    rclone --vfs-cache-mode full mount dev-onedrive: ~/OneDriveDev &
     echo "OneDrive accounts mounted."
 }
 
@@ -41,4 +41,11 @@ alias vim='nvim'
 alias gst='git status -sb'
 alias gup='git pull --rebase'
 alias ffind='find . -name '
+alias t='tmux attach -t dev || tmux new -s dev'
+alias rr='sudo reboot now'
 
+# Android Studio setup
+export ANDROID_HOME=$HOME/Android/Sdk
+export PATH=$PATH:$ANDROID_HOME/emulator
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
