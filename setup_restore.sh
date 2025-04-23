@@ -112,23 +112,23 @@ manage_file() {
         # Check if the content of the source file is different from the destination file
         if ! cmp -s "$source_file" "$dest_file"; then
             log "Content differs from backup. What do you want to do?"
-            echo "1) Overwrite $description with backup content (creates a backup of the current file)"
-            echo "2) Update backup file with current version of $description"
+            echo "1) Overwrite $description with remote content (creates a backup of the current file)"
+            echo "2) Update remote file with current version of $description"
             echo "3) Do nothing"
             read -r choice
 
             case $choice in
                 1)
                     # Create a backup of the current file before overwriting
-                    log "Overwriting home directory $description with backup version."
+                    log "Overwriting $description with remote version."
                     cp "$dest_file" "$backup_file" || log_error "Failed to create a backup."
                     cp "$source_file" "$dest_file" || log_error "Failed to overwrite $description."
                     log "Backup of the old $description saved as $backup_file."
                     ;;
                 2)
-                    log "Updating backup for $description."
-                    cp "$dest_file" "$source_file" || log_error "Failed to update backup."
-                    log "Backup updated with the current version of $description."
+                    log "Updating remote for $description."
+                    cp "$dest_file" "$source_file" || log_error "Failed to update remote."
+                    log "Remote updated with the current version of $description."
                     ;;
                 3)
                     log "No changes made to $description."
@@ -186,7 +186,7 @@ install_oh_my_zsh() {
 }
 
 # Install missing packages
-packages=(curl git zsh ripgrep xclip xsel tmux alacritty rclone)
+packages=(curl git zsh ripgrep xclip xsel tmux rclone)
 for package in "${packages[@]}"; do
     install_if_missing "$package"
 done
