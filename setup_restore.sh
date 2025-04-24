@@ -23,15 +23,16 @@ GLOBAL_GITIGNORE=~/.gitignore_global
 ZSHRC_PATH=~/.zshrc
 
 # Add Neovim to PATH in .zshrc if missing
-add_nvim_to_path() {
-    local nvim_path='export PATH="$PATH:/opt/nvim-linux64/bin"'
-    if ! grep -v '^#' "$ZSHRC_PATH" | grep -q "$nvim_path"; then
-        echo "$nvim_path" >> "$ZSHRC_PATH"
-        log "Neovim path added to .zshrc. Please restart terminal to apply changes."
-    else
-        log "Neovim path already in .zshrc."
-    fi
-}
+# Setting up symlink after install, removing this for now
+#add_nvim_to_path() {
+#    local nvim_path='export PATH="$PATH:/opt/nvim-linux64/bin"'
+#    if ! grep -v '^#' "$ZSHRC_PATH" | grep -q "$nvim_path"; then
+#        echo "$nvim_path" >> "$ZSHRC_PATH"
+#        log "Neovim path added to .zshrc. Please restart terminal to apply changes."
+#    else
+#        log "Neovim path already in .zshrc."
+#    fi
+#}
 
 # Install packages if missing
 install_if_missing() {
@@ -74,15 +75,19 @@ clone_repo() {
 install_neovim() {
     if ! command -v nvim &> /dev/null; then
         log "Installing Neovim..."
-        curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
-        sudo rm -rf /opt/nvim-linux64
-        sudo tar -C /opt -xzf nvim-linux64.tar.gz
-        rm nvim-linux64.tar.gz
-        add_nvim_to_path
+        curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
+        
+	[ -d /opt/nvim-linux-x86_64 ] && sudo rm -rf /opt/nvim-linux-x86_64
+	#[ -f nvim-linux-x86_64.tar.gz ] && rm nvim-linux-x86_64.tar.gz
+        sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz
+	sudo ln -sf /opt/nvim-linux-x86_64/bin/nvim /usr/local/bin/nvim
+        #rm nvim-linux-x86_64.tar.gz
+        
+	#add_nvim_to_path
         command -v nvim &> /dev/null && log "Neovim installed successfully." || log_error "Neovim installation failed."
     else
         log "Neovim is already installed."
-        add_nvim_to_path
+        #add_nvim_to_path
     fi
 }
 
