@@ -191,7 +191,7 @@ install_oh_my_zsh() {
 }
 
 # Install missing packages
-packages=(curl git zsh ripgrep xclip xsel tmux rclone)
+packages=(curl git zsh tmux)
 for package in "${packages[@]}"; do
     install_if_missing "$package"
 done
