@@ -1,5 +1,5 @@
 # Function for git commit & push
-function lazygit(){
+function lg(){
 	git add .
 	git status
 	git commit -am "$*"
